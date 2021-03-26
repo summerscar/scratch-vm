@@ -540,6 +540,8 @@ const execute = function (sequencer, thread) {
 
             // We are waiting for a promise. Stop running this set of operations
             // and continue them later after thawing the reported values.
+
+            // block 内部的promsie会直接跳过（包括当前block），直接执行下一个block  会影响带有promise的 hat block
             break;
         } else if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {

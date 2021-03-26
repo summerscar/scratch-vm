@@ -1535,7 +1535,7 @@ class VirtualMachine extends EventEmitter {
         }
         return null;
     }
-
+    //  可以替换 scratch link 连接的 ws 配置
     /**
      * Allow VM consumer to configure the ScratchLink socket creator.
      * @param {Function} factory The custom ScratchLink socket factory.
