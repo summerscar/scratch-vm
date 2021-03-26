@@ -11,6 +11,7 @@ const _stackFrameFreeList = [];
  * @constructor
  * @private
  */
+// 一个队列中的数据共享 ?
 class _StackFrame {
     constructor (warpMode) {
         /**

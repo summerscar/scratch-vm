@@ -171,6 +171,7 @@ class VirtualMachine extends EventEmitter {
     /**
      * Start running the VM - do this before anything else.
      */
+    // GUI 在 componentdidupdate 后执行 start
     start () {
         this.runtime.start();
     }

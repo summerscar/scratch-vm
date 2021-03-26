@@ -601,7 +601,7 @@ class Runtime extends EventEmitter {
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
     }
-    
+
     /**
      * Event name for when the user picks a bluetooth device to connect to
      * via Companion Device Manager (CDM)
@@ -913,7 +913,13 @@ class Runtime extends EventEmitter {
                     }
                     if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
                         this._hats[opcode] = {
+                            //  isEdgeActivated: false 时 hat 将采用 emit on 模式执行， 手动调用 this.runtime.startHats 执行 hat block
+                            // this.runtime.startHats('event_whenkeypressed', {
+                            //    KEY_OPTION: 'any'
+                            // });
+                            // 参考 src/blocks/scratch3_event.js
                             edgeActivated: blockInfo.isEdgeActivated,
+                            //  true  重新执行队列    参考  event_whenflagclicked
                             restartExistingThreads: blockInfo.shouldRestartExistingThreads
                         };
                     }
@@ -1839,6 +1845,7 @@ class Runtime extends EventEmitter {
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
         newThreads.forEach(thread => {
+            // 执行 hat 队列
             execute(this.sequencer, thread);
             thread.goToNextBlock();
         });
@@ -1992,6 +1999,7 @@ class Runtime extends EventEmitter {
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onGreenFlag();
         }
+        //  调用 edgeactived: false 的 event
         this.startHats('event_whenflagclicked');
     }
 
@@ -2573,6 +2581,7 @@ class Runtime extends EventEmitter {
             interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
         }
         this.currentStepTime = interval;
+        //  每 16.6ms 执行一次   edgeactived: true 的 hat block
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
