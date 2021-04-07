@@ -1306,6 +1306,7 @@ class VirtualMachine extends EventEmitter {
      * Disabled selectively by updates that don't affect project serialization.
      * Defaults to true.
      */
+    // target 数据更新 用于 GUI 更新 sprite 的状态数据     triggerProjectChange 同时触发 preoject changed
     emitTargetsUpdate (triggerProjectChange) {
         if (typeof triggerProjectChange === 'undefined') triggerProjectChange = true;
         this.emit('targetsUpdate', {

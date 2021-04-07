@@ -1569,6 +1569,8 @@ class Runtime extends EventEmitter {
      */
     attachRenderer (renderer) {
         this.renderer = renderer;
+        // 设置 layer 层级   背景 -> video -> pen -> sprite
+        // 仅能增加已注册的层级
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
     }
 
@@ -2440,6 +2442,7 @@ class Runtime extends EventEmitter {
     /**
      * Report that the project has changed in a way that would affect serialization
      */
+    //  GUI 中触发 自动保存/立即保存 逻辑
     emitProjectChanged () {
         this.emit(Runtime.PROJECT_CHANGED);
     }

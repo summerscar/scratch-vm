@@ -63,7 +63,8 @@ class ExtensionManager {
         /**
          * The ID number to provide to the next extension worker.
          * @type {int}
-         */
+        */
+        // service name 组成部分
         this.nextExtensionWorker = 0;
 
         /**
@@ -72,6 +73,7 @@ class ExtensionManager {
          *
          * @type {Array.<PendingExtensionWorker>}
          */
+        // 暂存即将分配进worker的extension信息
         this.pendingExtensions = [];
 
         /**
@@ -140,6 +142,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
+        // builtin extension  创建实例对象
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (this.isExtensionLoaded(extensionURL)) {
@@ -154,7 +157,7 @@ class ExtensionManager {
             this._loadedExtensions.set(extensionURL, serviceName);
             return Promise.resolve();
         }
-
+        // 未注册插件使用 worker 加载
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
@@ -181,7 +184,7 @@ class ExtensionManager {
         );
         return Promise.all(allPromises);
     }
-
+    //  在 new Worker 内调用, 创建非 builtin extension worker
     allocateWorker () {
         const id = this.nextExtensionWorker++;
         const workerInfo = this.pendingExtensions.shift();
@@ -193,6 +196,7 @@ class ExtensionManager {
      * Synchronously collect extension metadata from the specified service and begin the extension registration process.
      * @param {string} serviceName - the name of the service hosting the extension.
      */
+    // 调用 extension getinfo， 准备处理 getinfo 信息
     registerExtensionServiceSync (serviceName) {
         const info = dispatch.callSync(serviceName, 'getInfo');
         this._registerExtensionInfo(serviceName, info);
@@ -213,9 +217,11 @@ class ExtensionManager {
      * @param {int} id - the worker ID.
      * @param {*?} e - the error encountered during initialization, if any.
      */
+    // worker 中注册完外部插件信息后， 清理 extension manager 中的数据
     onWorkerInit (id, e) {
         const workerInfo = this.pendingWorkers[id];
         delete this.pendingWorkers[id];
+        // 完成 loadExtensionURL promise 的 resolve
         if (e) {
             workerInfo.reject(e);
         } else {
@@ -228,6 +234,8 @@ class ExtensionManager {
      * @param {object} extensionObject - the extension object to register
      * @returns {string} The name of the registered extension service
      */
+    // 注册插件实例进 dispatch 内部
+    // registerExtensionServiceSync  开始处理 extension getinfo 数据
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
@@ -243,8 +251,10 @@ class ExtensionManager {
      * @param {ExtensionInfo} extensionInfo - the extension's metadata
      * @private
      */
+    // 处理 extensionInfo
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
+        // 去 runtime 调用 _registerExtensionPrimitives，应该是将插件更新至 blockly -> GUI
         dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {
             log.error(`Failed to register primitives for extension on service ${serviceName}:`, e);
         });
@@ -256,6 +266,7 @@ class ExtensionManager {
      * @returns {string} - the sanitized text
      * @private
      */
+    // 处理非法 extension opcode   替换为下划线
     _sanitizeID (text) {
         return text.toString().replace(/[<"&]/, '_');
     }
@@ -268,6 +279,7 @@ class ExtensionManager {
      * @returns {ExtensionInfo} - a new extension info object with cleaned-up values
      * @private
      */
+    //  处理 extensioninfo   return by getinfo()
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
@@ -306,6 +318,7 @@ class ExtensionManager {
      * @returns {Array.<MenuInfo>} - a menuInfo object with all preprocessing done.
      * @private
      */
+    // 处理 extensioninfo 的方法
     _prepareMenuInfo (serviceName, menus) {
         const menuNames = Object.getOwnPropertyNames(menus);
         for (let i = 0; i < menuNames.length; i++) {
@@ -339,6 +352,7 @@ class ExtensionManager {
      * @returns {Array} menu items ready for scratch-blocks.
      * @private
      */
+    // 处理 extensioninfo 的方法
     _getExtensionMenuItems (extensionObject, menuItemFunctionName) {
         // Fetch the items appropriate for the target currently being edited. This assumes that menus only
         // collect items when opened by the user while editing a particular target.
@@ -377,6 +391,7 @@ class ExtensionManager {
      * @returns {ExtensionBlockMetadata} - a new block info object which has values for all relevant optional fields.
      * @private
      */
+    // 处理单个 block
     _prepareBlockInfo (serviceName, blockInfo) {
         blockInfo = Object.assign({}, {
             blockType: BlockType.COMMAND,
@@ -405,11 +420,13 @@ class ExtensionManager {
 
             const funcName = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
 
+            //  isDynamic  这个配置我没有用过，不清楚什么作用
             const getBlockInfo = blockInfo.isDynamic ?
                 args => args && args.mutation && args.mutation.blockInfo :
                 () => blockInfo;
             const callBlockFunc = (() => {
                 if (dispatch._isRemoteService(serviceName)) {
+                    // 调用 dispatch.services 中对应 function, 通过 postmessage 去通信啊
                     return (args, util, realBlockInfo) =>
                         dispatch.call(serviceName, funcName, args, util, realBlockInfo);
                 }
@@ -420,13 +437,14 @@ class ExtensionManager {
                     // The function might show up later as a dynamic property of the service object
                     log.warn(`Could not find extension block function called ${funcName}`);
                 }
+                // 调用 dispatch.services 中对应 function
                 return (args, util, realBlockInfo) =>
                     serviceObject[funcName](args, util, realBlockInfo);
             })();
 
             blockInfo.func = (args, util) => {
                 const realBlockInfo = getBlockInfo(args);
-                // TODO: filter args using the keys of realBlockInfo.arguments? maybe only if sandboxed?
+                //  调用 opcode function  传入3个参数 block arguments / runtime util / blockinfo
                 return callBlockFunc(args, util, realBlockInfo);
             };
             break;
