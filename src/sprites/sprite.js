@@ -106,6 +106,7 @@ class Sprite {
      * Defaults to the sprite layer group
      * @returns {!RenderedTarget} Newly created clone.
      */
+    // clone 并没有实体， 会被标记 isOriginal = false, 不会在GUI渲染
     createClone (optLayerGroup) {
         const newClone = new RenderedTarget(this, this.runtime);
         newClone.isOriginal = this.clones.length === 0;

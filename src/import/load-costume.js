@@ -323,7 +323,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
 
     const AssetType = runtime.storage.AssetType;
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
-
+    //  通过 storage 的 builtinhelper 或 webhelper 加载 aaset 至内存
     const costumePromise = runtime.storage.load(assetType, md5, ext);
     if (!costumePromise) {
         log.error(`Couldn't fetch costume asset: ${md5ext}`);

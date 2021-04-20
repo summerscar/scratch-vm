@@ -546,6 +546,7 @@ const serialize = function (runtime, targetId) {
 
     const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
 
+    // 指定 id 只返回单个target部分 不包含其他信息
     if (targetId) {
         return serializedTargets[0];
     }

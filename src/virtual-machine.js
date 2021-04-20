@@ -360,6 +360,7 @@ class VirtualMachine extends EventEmitter {
      */
     downloadProjectId (id) {
         const storage = this.runtime.storage;
+        // 需要操作 attach 进来的 storage
         if (!storage) {
             log.error('No storage module present; cannot load project: ', id);
             return;
@@ -375,8 +376,11 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
+        // 打包素材 image sound
+        //  {fileName, fileContent}
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
+        // 打包 package.json
         const projectJson = this.toJSON();
 
         // TODO want to eventually move zip creation out of here, and perhaps
@@ -432,6 +436,7 @@ class VirtualMachine extends EventEmitter {
 
         const soundDescs = serializeSounds(this.runtime, targetId);
         const costumeDescs = serializeCostumes(this.runtime, targetId);
+        // 只处理指定 target 部分     区别 是否指定 第二个参数
         const spriteJson = StringUtil.stringify(sb3.serialize(this.runtime, targetId));
 
         const zip = new JSZip();
@@ -515,7 +520,7 @@ class VirtualMachine extends EventEmitter {
         });
 
         targets = targets.filter(target => !!target);
-
+        // 先 load extension
         return Promise.all(extensionPromises).then(() => {
             targets.forEach(target => {
                 this.runtime.addTarget(target);
