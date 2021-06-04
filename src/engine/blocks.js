@@ -292,6 +292,7 @@ class Blocks {
     }
     // ---------------------------------------------------------------------
 
+    // workspace 监听  创建 删除 修改 blocks
     /**
      * Create event listener for blocks, variables, and comments. Handles validation and
      * serves as a generic adapter between the blocks, variables, and the
