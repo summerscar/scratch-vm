@@ -2285,6 +2285,7 @@ class Runtime extends EventEmitter {
         this.emit(Runtime.BLOCK_DRAG_END, blocks, topBlockId);
     }
 
+    // 处理手动点击 reporter 在GUI显示返回值
     /**
      * Emit value for reporter to show in the blocks.
      * @param {string} blockId ID for the block.
